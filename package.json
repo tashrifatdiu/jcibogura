@@ -1,7 +1,8 @@
 {
-  "name": "career_jci_bogura",
+  "name": "jci-bogura-learning-platform",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "JCI Bogura Learning Platform - Empowering learners with quality courses",
   "type": "module",
   "scripts": {
     "dev": "vite",
