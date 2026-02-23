@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { courseService } from './lib/courseService';
+import VideoUploader from './components/VideoUploader';
 
 function AdminDashboard({ onLogout, initialView }) {
   const navigate = useNavigate();
@@ -715,6 +716,7 @@ function VideoForm({ moduleId, video, videoCount, onSuccess, onCancel }) {
     order: video?.order || videoCount + 1
   });
   const [loading, setLoading] = useState(false);
+  const [showUploader, setShowUploader] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -744,67 +746,104 @@ function VideoForm({ moduleId, video, videoCount, onSuccess, onCancel }) {
     }
   };
 
+  const handleUploadComplete = (uploadData) => {
+    // Auto-fill form with uploaded video data
+    setFormData({
+      ...formData,
+      title: uploadData.title,
+      youtubeLink: uploadData.videoLink
+    });
+    setShowUploader(false);
+    alert('Video uploaded successfully! Please add description and save.');
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="md:col-span-3">
-          <label className="block text-sm font-medium mb-1" style={{ color: '#1d1a36' }}>Video Title</label>
-          <input
-            type="text"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+    <>
+      {showUploader && (
+        <VideoUploader
+          onUploadComplete={handleUploadComplete}
+          onCancel={() => setShowUploader(false)}
+        />
+      )}
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="md:col-span-3">
+            <label className="block text-sm font-medium mb-1" style={{ color: '#1d1a36' }}>Video Title</label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="w-full px-4 py-2 border-2 rounded-md"
+              style={{ borderColor: '#7cc7d0', color: '#1d1a36' }}
+              placeholder="e.g., What is React?"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: '#1d1a36' }}>Order</label>
+            <input
+              type="number"
+              value={formData.order}
+              onChange={(e) => setFormData({ ...formData, order: e.target.value })}
+              className="w-full px-4 py-2 border-2 rounded-md"
+              style={{ borderColor: '#7cc7d0', color: '#1d1a36' }}
+              min="1"
+              required
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1" style={{ color: '#1d1a36' }}>Description</label>
+          <textarea
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             className="w-full px-4 py-2 border-2 rounded-md"
             style={{ borderColor: '#7cc7d0', color: '#1d1a36' }}
-            placeholder="e.g., What is React?"
+            rows="3"
+            placeholder="Brief description of what this video covers"
             required
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1" style={{ color: '#1d1a36' }}>Order</label>
+          <div className="flex justify-between items-center mb-1">
+            <label className="block text-sm font-medium" style={{ color: '#1d1a36' }}>
+              Video Link (YouTube or Bunny.net)
+            </label>
+            {!video && (
+              <button
+                type="button"
+                onClick={() => setShowUploader(true)}
+                className="px-3 py-1 rounded-md text-white text-sm font-medium"
+                style={{ backgroundColor: '#2197cd' }}
+              >
+                📤 Upload to Bunny.net
+              </button>
+            )}
+          </div>
           <input
-            type="number"
-            value={formData.order}
-            onChange={(e) => setFormData({ ...formData, order: e.target.value })}
+            type="text"
+            value={formData.youtubeLink}
+            onChange={(e) => setFormData({ ...formData, youtubeLink: e.target.value })}
             className="w-full px-4 py-2 border-2 rounded-md"
             style={{ borderColor: '#7cc7d0', color: '#1d1a36' }}
-            min="1"
+            placeholder="YouTube URL or Bunny Video ID"
             required
           />
+          <p className="text-xs mt-1" style={{ color: '#64748b' }}>
+            Paste YouTube URL, Bunny Video ID, or click "Upload to Bunny.net" to upload directly
+          </p>
         </div>
-      </div>
-      <div>
-        <label className="block text-sm font-medium mb-1" style={{ color: '#1d1a36' }}>Description</label>
-        <textarea
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          className="w-full px-4 py-2 border-2 rounded-md"
-          style={{ borderColor: '#7cc7d0', color: '#1d1a36' }}
-          rows="3"
-          placeholder="Brief description of what this video covers"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium mb-1" style={{ color: '#1d1a36' }}>YouTube Link</label>
-        <input
-          type="url"
-          value={formData.youtubeLink}
-          onChange={(e) => setFormData({ ...formData, youtubeLink: e.target.value })}
-          className="w-full px-4 py-2 border-2 rounded-md"
-          style={{ borderColor: '#7cc7d0', color: '#1d1a36' }}
-          placeholder="https://www.youtube.com/watch?v=..."
-          required
-        />
-      </div>
-      <div className="flex gap-2">
-        <button type="submit" disabled={loading} className="flex-1 px-4 py-2 rounded-md text-white font-medium" style={{ backgroundColor: '#9b59b6' }}>
-          {loading ? 'Saving...' : video ? 'Update Video' : 'Add Video'}
-        </button>
-        <button type="button" onClick={onCancel} className="px-4 py-2 rounded-md font-medium" style={{ backgroundColor: '#e0e0e0', color: '#1d1a36' }}>
-          Cancel
-        </button>
-      </div>
-    </form>
+        <div className="flex gap-2">
+          <button type="submit" disabled={loading} className="flex-1 px-4 py-2 rounded-md text-white font-medium" style={{ backgroundColor: '#9b59b6' }}>
+            {loading ? 'Saving...' : video ? 'Update Video' : 'Add Video'}
+          </button>
+          <button type="button" onClick={onCancel} className="px-4 py-2 rounded-md font-medium" style={{ backgroundColor: '#e0e0e0', color: '#1d1a36' }}>
+            Cancel
+          </button>
+        </div>
+      </form>
+    </>
   );
 }
 

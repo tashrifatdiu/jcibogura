@@ -4,6 +4,8 @@ import { useTheme } from './ThemeContext';
 import { courseService } from './lib/courseService';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import BackToTop from './components/BackToTop';
+import LoadingSpinner from './components/LoadingSpinner';
 
 function Home() {
   const navigate = useNavigate();
@@ -172,26 +174,7 @@ function Home() {
 
           {/* Courses Grid */}
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '4rem' }}>
-              <img 
-                src="/jcilogo.png" 
-                alt="JCI Bogura" 
-                style={{ 
-                  width: '80px', 
-                  height: '80px', 
-                  objectFit: 'contain', 
-                  margin: '0 auto 1.5rem',
-                  animation: 'pulse 1.5s ease-in-out infinite'
-                }} 
-              />
-              <div style={{ fontSize: '1.25rem', color: colors.textSecondary, fontWeight: '500' }}>Loading courses...</div>
-              <style>{`
-                @keyframes pulse {
-                  0%, 100% { opacity: 1; transform: scale(1); }
-                  50% { opacity: 0.7; transform: scale(0.95); }
-                }
-              `}</style>
-            </div>
+            <LoadingSpinner message="Loading courses..." size="large" />
           ) : filteredCourses.length === 0 ? (
             <div style={{ 
               textAlign: 'center', 
@@ -297,6 +280,7 @@ function Home() {
       </div>
 
       <Footer />
+      <BackToTop />
     </div>
   );
 }

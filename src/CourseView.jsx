@@ -4,6 +4,7 @@ import { useTheme } from './ThemeContext';
 import { courseService } from './lib/courseService';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import BunnyVideoPlayer from './components/BunnyVideoPlayer';
 
 function CourseView({ user, onLogout }) {
   const { courseId } = useParams();
@@ -204,6 +205,37 @@ function CourseView({ user, onLogout }) {
         console.error('Failed to mark complete:', error);
       }
     }
+  };
+
+  const getVideoType = (url) => {
+    if (!url) return null;
+    
+    if (url.startsWith('bunny:') || url.includes('mediadelivery.net') || url.includes('bunnycdn.com')) {
+      return 'bunny';
+    }
+    
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      return 'youtube';
+    }
+    
+    return null;
+  };
+
+  const getBunnyVideoId = (url) => {
+    if (!url) return '';
+    
+    // Format: bunny:LIBRARY_ID/VIDEO_ID
+    if (url.startsWith('bunny:')) {
+      return url.replace('bunny:', '');
+    }
+    
+    // Format: https://iframe.mediadelivery.net/embed/LIBRARY_ID/VIDEO_ID
+    if (url.includes('mediadelivery.net/embed/')) {
+      const parts = url.split('/embed/')[1];
+      return parts ? parts.split('?')[0] : '';
+    }
+    
+    return '';
   };
 
   const getYouTubeVideoId = (url) => {
@@ -574,53 +606,62 @@ function CourseView({ user, onLogout }) {
               border: `1px solid ${colors.border}`
             }}>
               {/* Video */}
-              <div style={{ position: 'relative', paddingTop: '56.25%', backgroundColor: '#000' }}>
-                <div id="youtube-player" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}></div>
-              </div>
-
-              {/* Custom Controls */}
-              <div style={{ padding: '1rem', backgroundColor: isDark ? colors.surface : '#1d1a36' }}>
-                <input
-                  type="range"
-                  min="0"
-                  max={duration}
-                  value={currentTime}
-                  onChange={(e) => seekTo(parseFloat(e.target.value))}
-                  style={{ width: '100%', marginBottom: '1rem', cursor: 'pointer' }}
+              {getVideoType(selectedVideo.youtubeLink) === 'bunny' ? (
+                <BunnyVideoPlayer 
+                  videoId={getBunnyVideoId(selectedVideo.youtubeLink)}
+                  onReady={() => console.log('Bunny video ready')}
                 />
-
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <button
-                      onClick={skipBackward}
-                      style={{ background: 'none', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer', transition: 'transform 0.2s' }}
-                      onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
-                      onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-                    >
-                      ⏪
-                    </button>
-                    <button
-                      onClick={togglePlay}
-                      style={{ background: 'none', border: 'none', color: 'white', fontSize: '2rem', cursor: 'pointer', transition: 'transform 0.2s' }}
-                      onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
-                      onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-                    >
-                      {isPlaying ? '⏸' : '▶'}
-                    </button>
-                    <button
-                      onClick={skipForward}
-                      style={{ background: 'none', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer', transition: 'transform 0.2s' }}
-                      onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
-                      onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-                    >
-                      ⏩
-                    </button>
-                    <span style={{ color: 'white', fontSize: '0.875rem', fontWeight: '500' }}>
-                      {formatTime(currentTime)} / {formatTime(duration)}
-                    </span>
+              ) : (
+                <>
+                  <div style={{ position: 'relative', paddingTop: '56.25%', backgroundColor: '#000' }}>
+                    <div id="youtube-player" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}></div>
                   </div>
-                </div>
-              </div>
+
+                  {/* Custom Controls for YouTube */}
+                  <div style={{ padding: '1rem', backgroundColor: isDark ? colors.surface : '#1d1a36' }}>
+                    <input
+                      type="range"
+                      min="0"
+                      max={duration}
+                      value={currentTime}
+                      onChange={(e) => seekTo(parseFloat(e.target.value))}
+                      style={{ width: '100%', marginBottom: '1rem', cursor: 'pointer' }}
+                    />
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <button
+                          onClick={skipBackward}
+                          style={{ background: 'none', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer', transition: 'transform 0.2s' }}
+                          onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
+                          onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                        >
+                          ⏪
+                        </button>
+                        <button
+                          onClick={togglePlay}
+                          style={{ background: 'none', border: 'none', color: 'white', fontSize: '2rem', cursor: 'pointer', transition: 'transform 0.2s' }}
+                          onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
+                          onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                        >
+                          {isPlaying ? '⏸' : '▶'}
+                        </button>
+                        <button
+                          onClick={skipForward}
+                          style={{ background: 'none', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer', transition: 'transform 0.2s' }}
+                          onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
+                          onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                        >
+                          ⏩
+                        </button>
+                        <span style={{ color: 'white', fontSize: '0.875rem', fontWeight: '500' }}>
+                          {formatTime(currentTime)} / {formatTime(duration)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* Video Info */}
               <div style={{ padding: '1.5rem' }}>
